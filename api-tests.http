@@ -1,0 +1,50 @@
+### Sleep Logger API — Test Script
+### Requires: REST Client extension (VS Code) or IntelliJ HTTP Client
+
+### ============================================================
+### 1. POST — Create a valid sleep log
+### ============================================================
+
+POST http://localhost:8080/api/sleep-log
+Content-Type: application/json
+X-User-Id: 1
+
+{
+  "bedTime": "2026-02-19T23:30:00",
+  "wakeTime": "2026-02-20T07:00:00",
+  "morningFeeling": "GOOD"
+}
+
+### Expected: 201 Created
+
+### ============================================================
+### 2. POST — Duplicate sleep log (same user, same day)
+### ============================================================
+
+POST http://localhost:8080/api/sleep-log
+Content-Type: application/json
+X-User-Id: 1
+
+{
+  "bedTime": "2026-02-19T22:00:00",
+  "wakeTime": "2026-02-20T06:00:00",
+  "morningFeeling": "BAD"
+}
+
+### Expected: 409 Conflict
+
+### ============================================================
+### 3. POST — Invalid: wake time before bed time
+### ============================================================
+
+POST http://localhost:8080/api/sleep-log
+Content-Type: application/json
+X-User-Id: 2
+
+{
+  "bedTime": "2026-02-20T07:00:00",
+  "wakeTime": "2026-02-19T23:30:00",
+  "morningFeeling": "OK"
+}
+
+### Expected: 400 Bad Request
