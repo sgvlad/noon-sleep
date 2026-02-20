@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM openjdk:17-slim
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY gradle/ gradle/
 
 RUN ./gradlew wrapper
 
-COPY src/ src
+COPY src/ src/
 
 RUN ./gradlew build
 
