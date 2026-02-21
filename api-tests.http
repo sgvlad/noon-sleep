@@ -48,3 +48,21 @@ X-User-Id: 2
 }
 
 ### Expected: 400 Bad Request
+
+### ============================================================
+### 4. GET — Last night's sleep (after POST #1)
+### ============================================================
+
+GET http://localhost:8080/api/sleep-log/last-night
+X-User-Id: 1
+
+### Expected: 200 OK
+
+### ============================================================
+### 5. GET — Last night's sleep (no log exists)
+### ============================================================
+
+GET http://localhost:8080/api/sleep-log/last-night
+X-User-Id: 999
+
+### Expected: 404 Not Found
