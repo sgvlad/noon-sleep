@@ -2,11 +2,12 @@ package com.noom.interview.fullstack.sleep.sleeplog.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
+import com.noom.interview.fullstack.sleep.sleeplog.control.DuplicateSleepLogException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +60,31 @@ class SleepLogRepositoryTest {
         );
 
         assertThatThrownBy(() -> repository.save(duplicate))
-                .isInstanceOf(DuplicateKeyException.class);
+                .isInstanceOf(DuplicateSleepLogException.class);
+    }
+
+    @Test
+    void findByUserIdAndDate_existingLog_returnsLog() {
+        LocalDate date = LocalDate.of(2026, 4, 1);
+        SleepLog sleepLog = new SleepLog(
+                null, 10L, date,
+                LocalDateTime.of(2026, 3, 31, 23, 0),
+                LocalDateTime.of(2026, 4, 1, 7, 0),
+                MorningFeeling.GOOD, null
+        );
+        repository.save(sleepLog);
+
+        Optional<SleepLog> found = repository.findByUserIdAndDate(10L, date);
+
+        assertThat(found).isPresent();
+        assertThat(found.get().userId()).isEqualTo(10L);
+        assertThat(found.get().sleepDate()).isEqualTo(date);
+    }
+
+    @Test
+    void findByUserIdAndDate_noLog_returnsEmpty() {
+        Optional<SleepLog> found = repository.findByUserIdAndDate(999L, LocalDate.of(2026, 1, 1));
+
+        assertThat(found).isEmpty();
     }
 }

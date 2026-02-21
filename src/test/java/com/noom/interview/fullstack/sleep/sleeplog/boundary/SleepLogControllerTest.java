@@ -4,11 +4,11 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.noom.interview.fullstack.sleep.sleeplog.control.DuplicateSleepLogException;
+import com.noom.interview.fullstack.sleep.sleeplog.control.SleepLogNotFoundException;
 import com.noom.interview.fullstack.sleep.sleeplog.control.SleepLogService;
 import com.noom.interview.fullstack.sleep.sleeplog.entity.MorningFeeling;
 import com.noom.interview.fullstack.sleep.sleeplog.entity.SleepLog;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -117,5 +118,29 @@ class SleepLogControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getLastNightSleep_logExists_returns200() throws Exception {
+        SleepLog sleepLog = new SleepLog(1L, USER_ID, WAKE_TIME.toLocalDate(), BED_TIME, WAKE_TIME, MorningFeeling.GOOD, LocalDateTime.now());
+        when(sleepLogService.getLastNightSleep(USER_ID)).thenReturn(sleepLog);
+
+        mockMvc.perform(get("/api/sleep-log/last-night")
+                        .header("X-User-Id", USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sleepDate").value("2026-02-20"))
+                .andExpect(jsonPath("$.morningFeeling").value("GOOD"))
+                .andExpect(jsonPath("$.totalTimeInBed").value("PT7H30M"));
+    }
+
+    @Test
+    void getLastNightSleep_noLog_returns404() throws Exception {
+        when(sleepLogService.getLastNightSleep(USER_ID))
+                .thenThrow(new SleepLogNotFoundException("No sleep log found"));
+
+        mockMvc.perform(get("/api/sleep-log/last-night")
+                        .header("X-User-Id", USER_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("No sleep log found"));
     }
 }

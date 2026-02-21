@@ -1,6 +1,8 @@
 package com.noom.interview.fullstack.sleep.sleeplog.control;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import com.noom.interview.fullstack.sleep.sleeplog.boundary.CreateSleepLogRequest;
 import com.noom.interview.fullstack.sleep.sleeplog.entity.MorningFeeling;
@@ -11,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DuplicateKeyException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,11 +63,32 @@ class SleepLogServiceTest {
 
     @Test
     void createSleepLog_duplicateEntry_throwsDuplicateSleepLogException() {
-        when(sleepLogRepository.save(any(SleepLog.class))).thenThrow(new DuplicateKeyException("duplicate"));
+        when(sleepLogRepository.save(any(SleepLog.class))).thenThrow(new DuplicateSleepLogException("duplicate", new RuntimeException()));
 
         CreateSleepLogRequest request = new CreateSleepLogRequest(BED_TIME, WAKE_TIME, MorningFeeling.BAD);
         assertThatThrownBy(() -> sleepLogService.createSleepLog(USER_ID, request))
-                .isInstanceOf(DuplicateSleepLogException.class)
-                .hasMessageContaining("Sleep log already exists");
+                .isInstanceOf(DuplicateSleepLogException.class);
+    }
+
+    @Test
+    void getLastNightSleep_logExists_returnsLog() {
+        LocalDate today = LocalDate.now();
+        SleepLog existingLog = new SleepLog(1L, USER_ID, today, BED_TIME, WAKE_TIME, MorningFeeling.GOOD, LocalDateTime.now());
+        when(sleepLogRepository.findByUserIdAndDate(USER_ID, today)).thenReturn(Optional.of(existingLog));
+
+        SleepLog result = sleepLogService.getLastNightSleep(USER_ID);
+
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.sleepDate()).isEqualTo(today);
+    }
+
+    @Test
+    void getLastNightSleep_noLog_throwsSleepLogNotFoundException() {
+        LocalDate today = LocalDate.now();
+        when(sleepLogRepository.findByUserIdAndDate(USER_ID, today)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> sleepLogService.getLastNightSleep(USER_ID))
+                .isInstanceOf(SleepLogNotFoundException.class)
+                .hasMessageContaining("No sleep log found");
     }
 }

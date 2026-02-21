@@ -2,7 +2,12 @@ package com.noom.interview.fullstack.sleep.sleeplog.entity;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.Optional;
 
+import com.noom.interview.fullstack.sleep.sleeplog.control.DuplicateSleepLogException;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -17,16 +22,36 @@ public class SleepLogRepository {
     }
 
     public SleepLog save(SleepLog sleepLog) {
-        return jdbc.queryForObject(INSERT_SLEEP_LOG, mapToSqlParams(sleepLog), this::mapToSleepLog);
+        try {
+            return jdbc.queryForObject(INSERT_SLEEP_LOG, mapToInsertParams(sleepLog), this::mapToSleepLog);
+        } catch (DuplicateKeyException exception) {
+            throw new DuplicateSleepLogException(
+                    "Sleep log already exists for user " + sleepLog.userId() + " on " + sleepLog.sleepDate(), exception);
+        }
     }
 
-    private MapSqlParameterSource mapToSqlParams(SleepLog sleepLog) {
+    public Optional<SleepLog> findByUserIdAndDate(Long userId, LocalDate sleepDate) {
+        try {
+            SleepLog sleepLog = jdbc.queryForObject(FIND_BY_USER_ID_AND_DATE, mapToFindByUserParams(userId, sleepDate), this::mapToSleepLog);
+            return Optional.ofNullable(sleepLog);
+        } catch (EmptyResultDataAccessException exception) {
+            return Optional.empty();
+        }
+    }
+
+    private MapSqlParameterSource mapToInsertParams(SleepLog sleepLog) {
         return new MapSqlParameterSource()
                 .addValue("userId", sleepLog.userId())
                 .addValue("sleepDate", sleepLog.sleepDate())
                 .addValue("bedTime", sleepLog.bedTime())
                 .addValue("wakeTime", sleepLog.wakeTime())
                 .addValue("morningFeeling", sleepLog.morningFeeling().name());
+    }
+
+    private MapSqlParameterSource mapToFindByUserParams(Long userId, LocalDate sleepDate) {
+        return new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("sleepDate", sleepDate);
     }
 
     private SleepLog mapToSleepLog(ResultSet rs, int rowNum) throws SQLException {
@@ -45,6 +70,11 @@ public class SleepLogRepository {
             INSERT INTO sleep_log (user_id, sleep_date, bed_time, wake_time, morning_feeling)
             VALUES (:userId, :sleepDate, :bedTime, :wakeTime, :morningFeeling)
             RETURNING *
+            """;
+
+    private static final String FIND_BY_USER_ID_AND_DATE = """
+            SELECT * FROM sleep_log
+            WHERE user_id = :userId AND sleep_date = :sleepDate
             """;
 
     private static class Column {
