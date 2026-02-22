@@ -47,13 +47,13 @@ All endpoints require `X-User-Id` header (simulates user identity, no real auth)
 
 ### Start the database
 ```bash
-cd noon
+cd noom
 docker-compose up db
 ```
 
 ### Run the application
 ```bash
-cd sleep
+cd noom-sleep
 ./gradlew bootRun
 ```
 
@@ -61,14 +61,14 @@ The API will be available at `http://localhost:8080`.
 
 ### Run with Docker Compose (full stack)
 ```bash
-cd noon
+cd noom
 docker-compose up
 ```
 
 ## Running Tests
 
 ```bash
-cd sleep
+cd noom-sleep
 ./gradlew test
 ```
 
