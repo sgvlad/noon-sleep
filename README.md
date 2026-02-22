@@ -1,6 +1,14 @@
+Hello :wave:,
+
+I really enjoyed this assignment. I must confess that at the beginning I thought that it was easier.
+During the assignment, I had some questions, but I decided to speed things up by making some assumptions.
+Any feedback is welcome :smiley:.
+
+
+
 # Sleep Logger API
 
-A REST API for logging and analyzing sleep data, built as part of the Noom fullstack interview.
+A REST API for logging and analysing sleep data, built as part of the Noom fullstack interview.
 
 ## Tech Stack
 
