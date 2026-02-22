@@ -66,3 +66,21 @@ GET http://localhost:8080/api/sleep-log/last-night
 X-User-Id: 999
 
 ### Expected: 404 Not Found
+
+### ============================================================
+### 6. GET — 30-day averages (after POST #1)
+### ============================================================
+
+GET http://localhost:8080/api/sleep-log/averages
+X-User-Id: 1
+
+### Expected: 200 OK
+
+### ============================================================
+### 7. GET — 30-day averages (no data)
+### ============================================================
+
+GET http://localhost:8080/api/sleep-log/averages
+X-User-Id: 999
+
+### Expected: 200 OK with zeroed/empty data

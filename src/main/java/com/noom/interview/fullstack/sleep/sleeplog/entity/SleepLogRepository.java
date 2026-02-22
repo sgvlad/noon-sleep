@@ -3,6 +3,7 @@ package com.noom.interview.fullstack.sleep.sleeplog.entity;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import com.noom.interview.fullstack.sleep.sleeplog.control.DuplicateSleepLogException;
@@ -39,6 +40,10 @@ public class SleepLogRepository {
         }
     }
 
+    public List<SleepLog> findByUserIdAndDateRange(Long userId, LocalDate from, LocalDate to) {
+        return jdbc.query(FIND_BY_USER_ID_AND_DATE_RANGE, mapToFindByUserDateRangeParams(userId, from, to), this::mapToSleepLog);
+    }
+
     private MapSqlParameterSource mapToInsertParams(SleepLog sleepLog) {
         return new MapSqlParameterSource()
                 .addValue("userId", sleepLog.userId())
@@ -54,16 +59,11 @@ public class SleepLogRepository {
                 .addValue("sleepDate", sleepDate);
     }
 
-    private SleepLog mapToSleepLog(ResultSet rs, int rowNum) throws SQLException {
-        return new SleepLog(
-                rs.getLong(Column.ID),
-                rs.getLong(Column.USER_ID),
-                rs.getDate(Column.SLEEP_DATE).toLocalDate(),
-                rs.getTimestamp(Column.BED_TIME).toLocalDateTime(),
-                rs.getTimestamp(Column.WAKE_TIME).toLocalDateTime(),
-                MorningFeeling.valueOf(rs.getString(Column.MORNING_FEELING)),
-                rs.getTimestamp(Column.CREATED_AT).toLocalDateTime()
-        );
+    private MapSqlParameterSource mapToFindByUserDateRangeParams(Long userId, LocalDate from, LocalDate to) {
+        return new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("from", from)
+                .addValue("to", to);
     }
 
     private static final String INSERT_SLEEP_LOG = """
@@ -77,6 +77,22 @@ public class SleepLogRepository {
             WHERE user_id = :userId AND sleep_date = :sleepDate
             """;
 
+    private static final String FIND_BY_USER_ID_AND_DATE_RANGE = """
+            SELECT * FROM sleep_log
+            WHERE user_id = :userId AND sleep_date > :from AND sleep_date <= :to
+            """;
+
+    private SleepLog mapToSleepLog(ResultSet rs, int rowNum) throws SQLException {
+        return new SleepLog(
+                rs.getLong(Column.ID),
+                rs.getLong(Column.USER_ID),
+                rs.getDate(Column.SLEEP_DATE).toLocalDate(),
+                rs.getTimestamp(Column.BED_TIME).toLocalDateTime(),
+                rs.getTimestamp(Column.WAKE_TIME).toLocalDateTime(),
+                MorningFeeling.valueOf(rs.getString(Column.MORNING_FEELING)),
+                rs.getTimestamp(Column.CREATED_AT).toLocalDateTime()
+        );
+    }
     private static class Column {
         static final String ID = "id";
         static final String USER_ID = "user_id";
