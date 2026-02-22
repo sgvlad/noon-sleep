@@ -1,5 +1,6 @@
 package com.noom.interview.fullstack.sleep.sleeplog.boundary;
 
+import com.noom.interview.fullstack.sleep.sleeplog.entity.SleepAverages;
 import com.noom.interview.fullstack.sleep.sleeplog.control.SleepLogService;
 import com.noom.interview.fullstack.sleep.sleeplog.entity.SleepLog;
 import org.springframework.http.HttpStatus;
@@ -40,5 +41,14 @@ public class SleepLogController {
         SleepLog sleepLog = sleepLogService.getLastNightSleep(userId);
 
         return ResponseEntity.ok(SleepLogResponse.fromSleepLog(sleepLog));
+    }
+
+    @GetMapping("/averages")
+    public ResponseEntity<SleepAveragesResponse> getLast30DayAverages(
+            @RequestHeader("X-User-Id") Long userId) {
+
+        SleepAverages averages = sleepLogService.getLast30DayAverages(userId);
+
+        return ResponseEntity.ok(SleepAveragesResponse.fromSleepAverages(averages));
     }
 }

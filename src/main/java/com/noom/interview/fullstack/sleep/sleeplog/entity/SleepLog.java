@@ -21,6 +21,6 @@ public record SleepLog(
     }
 
     public static SleepLog fromRequest(Long userId, CreateSleepLogRequest request) {
-        return new SleepLog(null, userId, LocalDate.now(), request.bedTime(), request.wakeTime(), request.morningFeeling(), null);
+        return new SleepLog(null, userId, request.wakeTime().toLocalDate(), request.bedTime(), request.wakeTime(), request.morningFeeling(), null);
     }
 }
